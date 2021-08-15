@@ -240,7 +240,9 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
       }
     }
 
-    return {reservations, scrollPosition};
+    console.log('reservations', reservations);
+
+    return {reservations: uniqueBy(reservations, v => v.date?.toDateString()), scrollPosition};
   }
 
   onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -324,6 +326,27 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
       />
     );
   }
+}
+
+type Resolver<T> = (item: T) => any;
+type Indexer<T> = number | keyof T | symbol;
+export type ValueResolver<T> = Indexer<T> | Resolver<T>;
+function uniqueBy<T>(array: T[], valueResolver?: ValueResolver<T>) {
+  if (!(valueResolver != null)) return [...new Set(array)];
+
+  const key = typeof valueResolver !== 'function' && valueResolver,
+    map = new Map<any, T>();
+
+  // @ts-ignore
+  valueResolver = key ? (item: Record<Indexer<T>, any>) => item?.[key] ?? item : valueResolver;
+
+  for (const item of array) {
+    const key = (valueResolver as Resolver<T>)(item);
+
+    if (!map.has(key)) map.set(key, item);
+  }
+
+  return [...map.values()];
 }
 
 export default ReservationList;
