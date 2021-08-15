@@ -3,7 +3,17 @@ import PropTypes from 'prop-types';
 import XDate from 'xdate';
 
 import React, {Component} from 'react';
-import {ActivityIndicator, View, FlatList, StyleProp, ViewStyle, TextStyle, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent} from 'react-native';
+import {
+  ActivityIndicator,
+  View,
+  FlatList,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  LayoutChangeEvent
+} from 'react-native';
 
 // @ts-expect-error
 import {extractComponentProps} from '../../component-updater';
@@ -14,7 +24,6 @@ import {toMarkingFormat} from '../../interface';
 import styleConstructor from './style';
 import Reservation, {ReservationProps} from './reservation';
 import {ReservationItemType, ReservationsType} from 'agenda';
-
 
 export interface DayReservations {
   reservation?: ReservationItemType;
@@ -53,6 +62,9 @@ export type ReservationListProps = ReservationProps & {
   refreshing?: boolean;
   /** If provided, a standard RefreshControl will be added for "Pull to Refresh" functionality. Make sure to also set the refreshing prop correctly */
   onRefresh?: () => void;
+
+  // 追加
+  reversed?: boolean;
 };
 
 interface ReservationsListState {
@@ -92,7 +104,9 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
     /** Set this true while waiting for new data from a refresh */
     refreshing: PropTypes.bool,
     /** If provided, a standard RefreshControl will be added for "Pull to Refresh" functionality. Make sure to also set the refreshing prop correctly */
-    onRefresh: PropTypes.func
+    onRefresh: PropTypes.func,
+    // 追加
+    reversed: PropTypes.bool
   };
 
   static defaultProps = {
@@ -104,7 +118,6 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
   private selectedDay: XDate;
   private scrollOver: boolean;
   private list: React.RefObject<FlatList> = React.createRef();
-
 
   constructor(props: ReservationListProps) {
     super(props);
@@ -184,16 +197,18 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
   }
 
   getReservations(props: ReservationListProps) {
-    const {selectedDay, showOnlySelectedDayItems} = props;
+    const {selectedDay, showOnlySelectedDayItems, reversed} = props;
     if (!props.reservations || !selectedDay) {
       return {reservations: [], scrollPosition: 0};
     }
+
+    const addDaysValue = !reversed ? 1 : -1;
 
     let reservations: DayReservations[] = [];
     if (this.state.reservations && this.state.reservations.length) {
       const iterator = this.state.reservations[0].day.clone();
 
-      while (iterator.getTime() < selectedDay.getTime()) {
+      while (!reversed ? iterator.getTime() < selectedDay.getTime() : iterator.getTime() > selectedDay.getTime()) {
         const res = this.getReservationsForDay(iterator, props);
         if (!res) {
           reservations = [];
@@ -201,7 +216,7 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
         } else {
           reservations = reservations.concat(res);
         }
-        iterator.addDays(1);
+        iterator.addDays(addDaysValue);
       }
     }
 
@@ -213,7 +228,7 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
       if (res) {
         reservations = res;
       }
-      iterator.addDays(1);
+      iterator.addDays(addDaysValue);
     } else {
       for (let i = 0; i < 31; i++) {
         const res = this.getReservationsForDay(iterator, props);
@@ -221,7 +236,7 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
         if (res) {
           reservations = reservations.concat(res);
         }
-        iterator.addDays(1);
+        iterator.addDays(addDaysValue);
       }
     }
 
