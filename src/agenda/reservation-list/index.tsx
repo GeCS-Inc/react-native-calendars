@@ -240,8 +240,6 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
       }
     }
 
-    console.log('reservations', reservations);
-
     return {reservations: uniqueBy(reservations, v => v.date?.toDateString()), scrollPosition};
   }
 
