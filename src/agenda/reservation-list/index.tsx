@@ -240,7 +240,7 @@ class ReservationList extends Component<ReservationListProps, ReservationsListSt
       }
     }
 
-    return {reservations: uniqueBy(reservations, v => v.date?.toDateString()), scrollPosition};
+    return {reservations, scrollPosition};
   }
 
   onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
